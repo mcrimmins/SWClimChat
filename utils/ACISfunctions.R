@@ -14,9 +14,16 @@ find_station_id_core <- function(state, city_name) {
   
   raw <- resp_body_json(req)
   
-  df <- map_df(raw$meta, function(x) {
-    data.frame(name = x$name, id = x$sids[[1]])
-  })
+  df <- purrr::map_df(raw$meta, function(x) {
+    # Safely extract the first ID only if the list isn't empty
+    station_id <- if (length(x$sids) > 0) x$sids[[1]] else NA_character_
+    
+    data.frame(
+      name = x$name, 
+      id = station_id
+    )
+  }) |> 
+    dplyr::filter(!is.na(id)) # Filter out the "ghost" stations
   
   # matches <- df |> 
   #   filter(grepl(city_name, name, ignore.case = TRUE)) |> 
